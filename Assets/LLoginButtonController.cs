@@ -1,22 +1,25 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
+using System.Collections;
 
 public class LLoginButtonController : MonoBehaviour {
 
-	// Use this for initialization
-	void Start () {
-		
+    public GameObject UserNameInputFieldObject;
+    public GameObject PasswordInputField;
+
+    // Use this for initialization
+    void Start () {
+	
 	}
 	
 	// Update is called once per frame
 	void Update () {
-		
+	
 	}
 
-	public void OnClick()
-	{
-		GameObject.Find ("MenuManager").GetComponent<MenuManager> ().LoginPanel.SetActive (false);
-		GameObject.Find ("MenuManager").GetComponent<MenuManager> ().ServerSelectPanel.SetActive (true);
-	}
+    public void OnClick()
+    {
+        string user = UserNameInputFieldObject.GetComponent<UnityEngine.UI.Text>().text;
+        string pass = PasswordInputField.GetComponent<UnityEngine.UI.Text>().text;
+        GameObject.Find("EverClient").GetComponent<EverClient>().Login(user,pass);
+    }
 }
