@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\EverClient.cs" />
+    <Compile Include="Assets\EverMsgType.cs" />
     <Compile Include="Assets\InitialisePanelManager.cs" />
     <Compile Include="Assets\LExitButtonController.cs" />
     <Compile Include="Assets\LLoginButtonController.cs" />

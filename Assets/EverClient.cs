@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.Networking;
 using System;
+using UnityEngine.Networking.NetworkSystem;
 
 public class EverClient : MonoBehaviour {
 
@@ -30,9 +31,19 @@ public class EverClient : MonoBehaviour {
         Initialised = true;
     }
 
+    public string BuildAuthenticationPacket(String username, String password)
+    {
+        // TODO: determine how messaging system uses SSL if at all
+        // TODO: ssl web sockets instead?
+        // TODO: salt this after this information is discovered
+        string authenticationpacket = username + "|" + password;
+        return authenticationpacket;
+    }
+
     public void Login(string user, string pass)
     {
         Debug.Log("Authenticating: " + user + "&" + pass);
+        _client.Send(EverMsgType.AuthenticationRequest, new StringMessage(BuildAuthenticationPacket(user,pass)));
     }
 
     private void OnError(NetworkMessage netMsg)
