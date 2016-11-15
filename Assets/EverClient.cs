@@ -27,8 +27,20 @@ public class EverClient : MonoBehaviour {
         _client.RegisterHandler(MsgType.Connect, OnConnect);
         _client.RegisterHandler(MsgType.Disconnect, OnDisconnect);
         _client.RegisterHandler(MsgType.Error, OnError);
+        _client.RegisterHandler(EverMsgType.AuthenticationFailed, OnAuthenticationFailed);
+        _client.RegisterHandler(EverMsgType.AuthenticationSucceeded, OnAuthenticationSucceeded);
 
         Initialised = true;
+    }
+
+    private void OnAuthenticationSucceeded(NetworkMessage netMsg)
+    {
+        Debug.Log("Authenticating: SUCCESS");
+    }
+
+    private void OnAuthenticationFailed(NetworkMessage netMsg)
+    {
+        Debug.Log("Authenticating: FAILED");
     }
 
     public string BuildAuthenticationPacket(String username, String password)
