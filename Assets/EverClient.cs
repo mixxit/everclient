@@ -11,6 +11,7 @@ public class EverClient : MonoBehaviour {
     public static EverClient Instance;
     private NetworkClient _client;
     public bool Initialised = false;
+    private string _token = "";
 
 	// Use this for initialization
 	void Start () {
@@ -29,13 +30,20 @@ public class EverClient : MonoBehaviour {
         _client.RegisterHandler(MsgType.Error, OnError);
         _client.RegisterHandler(EverMsgType.AuthenticationFailed, OnAuthenticationFailed);
         _client.RegisterHandler(EverMsgType.AuthenticationSucceeded, OnAuthenticationSucceeded);
+        _client.RegisterHandler(EverMsgType.AuthenticationUnavailable, OnAuthenticationUnavailable);
 
         Initialised = true;
+    }
+
+    private void OnAuthenticationUnavailable(NetworkMessage netMsg)
+    {
+        Debug.Log("Authenticating: UNAVAILABLE");
     }
 
     private void OnAuthenticationSucceeded(NetworkMessage netMsg)
     {
         Debug.Log("Authenticating: SUCCESS");
+        _token = netMsg.reader.ReadString();
     }
 
     private void OnAuthenticationFailed(NetworkMessage netMsg)
