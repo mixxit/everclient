@@ -3,6 +3,7 @@ using System.Collections;
 using UnityEngine.Networking;
 using System;
 using UnityEngine.Networking.NetworkSystem;
+using System.Collections.Generic;
 
 public class EverClient : MonoBehaviour {
 
@@ -12,6 +13,7 @@ public class EverClient : MonoBehaviour {
     private NetworkClient _client;
     public bool Initialised = false;
     private string _token = "";
+    private string _username = "";
 
 	// Use this for initialization
 	void Start () {
@@ -31,7 +33,7 @@ public class EverClient : MonoBehaviour {
         _client.RegisterHandler(EverMsgType.AuthenticationFailed, OnAuthenticationFailed);
         _client.RegisterHandler(EverMsgType.AuthenticationSucceeded, OnAuthenticationSucceeded);
         _client.RegisterHandler(EverMsgType.AuthenticationUnavailable, OnAuthenticationUnavailable);
-
+        _client.RegisterHandler(EverMsgType.ServerSelectionListResponse, OnServerSelectionListResponse);
         Initialised = true;
     }
 
@@ -44,6 +46,13 @@ public class EverClient : MonoBehaviour {
     {
         Debug.Log("Authenticating: SUCCESS");
         _token = netMsg.reader.ReadString();
+
+        RequestServerListRefresh();
+    }
+
+    public void RequestServerListRefresh()
+    {
+        _client.Send(EverMsgType.ServerSelectionListRequest, new StringMessage(BuildUserTokenValidationPacket()));
     }
 
     private void OnAuthenticationFailed(NetworkMessage netMsg)
@@ -60,9 +69,16 @@ public class EverClient : MonoBehaviour {
         return authenticationpacket;
     }
 
+    public string BuildUserTokenValidationPacket()
+    {
+        string usertokenvalidation = _username + "|" + _token;
+        return usertokenvalidation;
+    }
+
     public void Login(string user, string pass)
     {
         Debug.Log("Authenticating: " + user + "&" + pass);
+        _username = user;
         _client.Send(EverMsgType.AuthenticationRequest, new StringMessage(BuildAuthenticationPacket(user,pass)));
     }
 
@@ -71,6 +87,29 @@ public class EverClient : MonoBehaviour {
         Debug.Log("Error connecting");
         GameObject.Find("MenuManager").GetComponent<MenuManager>().FallbackMessage("Error connecting");
         Initialised = false;
+    }
+
+    private void OnServerSelectionListResponse(NetworkMessage netMsg)
+    {
+        string data = netMsg.reader.ReadString();
+        Debug.Log("Received ServerList Data: " + data);
+        List<WorldServer> serverlist = new List<WorldServer>();
+
+        if (!String.IsNullOrEmpty(data))
+        {
+            string[] serversdata = data.Split('^');
+            foreach (string serverdata in serversdata)
+            {
+                string[] servercolumns = serverdata.Split('|');
+                WorldServer worldserver = new WorldServer();
+                worldserver.serverip = servercolumns[0];
+                worldserver.serverport = Convert.ToDecimal(servercolumns[1]);
+                worldserver.servername = servercolumns[2];
+                serverlist.Add(worldserver);
+            }
+        }
+
+        GameObject.Find("MenuManager").GetComponent<MenuManager>().ShowServerSelect(serverlist);
     }
 
     private void OnDisconnect(NetworkMessage netMsg)

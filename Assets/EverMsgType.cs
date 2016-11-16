@@ -7,4 +7,7 @@ public class EverMsgType
     public const int AuthenticationSucceeded = 1001;
     public const int AuthenticationFailed = 1002;
     public const int AuthenticationUnavailable = 1003;
+
+    public const int ServerSelectionListRequest = 3001;
+    public const int ServerSelectionListResponse = 3002;
 }

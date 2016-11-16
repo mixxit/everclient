@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
+using System;
 
 public class MenuManager : MonoBehaviour {
 
@@ -41,4 +42,13 @@ public class MenuManager : MonoBehaviour {
         HideAllScreens();
         InitialisePanel.SetActive(true);
     }
+
+    public void ShowServerSelect(List<WorldServer> worldservers)
+    {
+        HideAllScreens();
+        ServerSelectPanel.GetComponent<ServerSelectController>().BuildServerSelectPanel(worldservers);
+        ServerSelectPanel.SetActive(true);
+    }
+
+    
 }

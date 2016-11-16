@@ -69,6 +69,9 @@
     <Compile Include="Assets\LExitButtonController.cs" />
     <Compile Include="Assets\LLoginButtonController.cs" />
     <Compile Include="Assets\MenuManager.cs" />
+    <Compile Include="Assets\ServerListRefreshButtonController.cs" />
+    <Compile Include="Assets\ServerSelectController.cs" />
+    <Compile Include="Assets\WorldServer.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
