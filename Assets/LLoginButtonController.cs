@@ -20,6 +20,6 @@ public class LLoginButtonController : MonoBehaviour {
     {
         string user = UserNameInputFieldObject.GetComponent<UnityEngine.UI.Text>().text;
         string pass = PasswordInputField.GetComponent<UnityEngine.UI.Text>().text;
-        GameObject.Find("EverClient").GetComponent<EverClient>().Login(user,pass);
+        GameObject.Find("EverClient").GetComponent<ClientController>().Login(user,pass);
     }
 }

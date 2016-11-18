@@ -63,15 +63,20 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\EverClient.cs" />
+    <Compile Include="Assets\Account.cs" />
+    <Compile Include="Assets\ActiveWorldServer.cs" />
+    <Compile Include="Assets\ClientController.cs" />
     <Compile Include="Assets\EverMsgType.cs" />
     <Compile Include="Assets\InitialisePanelManager.cs" />
     <Compile Include="Assets\LExitButtonController.cs" />
     <Compile Include="Assets\LLoginButtonController.cs" />
+    <Compile Include="Assets\LoginServerController.cs" />
     <Compile Include="Assets\MenuManager.cs" />
     <Compile Include="Assets\ServerListRefreshButtonController.cs" />
     <Compile Include="Assets\ServerSelectController.cs" />
     <Compile Include="Assets\WorldServer.cs" />
+    <Compile Include="Assets\WorldServerController.cs" />
+    <Compile Include="Assets\ZoneServerController.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>

@@ -5,11 +5,10 @@ using System;
 using UnityEngine.Networking.NetworkSystem;
 using System.Collections.Generic;
 
-public class EverClient : MonoBehaviour {
+public class ClientController : MonoBehaviour {
 
     public string hostname;
     public int port;
-    public static EverClient Instance;
     private NetworkClient _client;
     public bool Initialised = false;
     private string _token = "";
@@ -30,34 +29,29 @@ public class EverClient : MonoBehaviour {
         _client.RegisterHandler(MsgType.Connect, OnConnect);
         _client.RegisterHandler(MsgType.Disconnect, OnDisconnect);
         _client.RegisterHandler(MsgType.Error, OnError);
-        _client.RegisterHandler(EverMsgType.AuthenticationFailed, OnAuthenticationFailed);
-        _client.RegisterHandler(EverMsgType.AuthenticationSucceeded, OnAuthenticationSucceeded);
-        _client.RegisterHandler(EverMsgType.AuthenticationUnavailable, OnAuthenticationUnavailable);
+        _client.RegisterHandler(EverMsgType.ClientLoginAuthenticationResponse, OnClientLoginAuthenticationResponse);
         _client.RegisterHandler(EverMsgType.ServerSelectionListResponse, OnServerSelectionListResponse);
         Initialised = true;
     }
 
-    private void OnAuthenticationUnavailable(NetworkMessage netMsg)
+    private void OnClientLoginAuthenticationResponse(NetworkMessage netMsg)
     {
-        Debug.Log("Authenticating: UNAVAILABLE");
-    }
-
-    private void OnAuthenticationSucceeded(NetworkMessage netMsg)
-    {
-        Debug.Log("Authenticating: SUCCESS");
-        _token = netMsg.reader.ReadString();
-
-        RequestServerListRefresh();
+        string[] clientLoginAuthenticationResponse = netMsg.reader.ReadString().Split('|');
+        Debug.Log("Server sent back login result of : " + clientLoginAuthenticationResponse[0]);
+        if (clientLoginAuthenticationResponse[0].Equals("1"))
+        {
+            Debug.Log("Authenticating: SUCCESS");
+            _token = clientLoginAuthenticationResponse[1];
+            RequestServerListRefresh();
+        } else
+        {
+            Debug.Log("Authenticating: FAILED");
+        }
     }
 
     public void RequestServerListRefresh()
     {
         _client.Send(EverMsgType.ServerSelectionListRequest, new StringMessage(BuildUserTokenValidationPacket()));
-    }
-
-    private void OnAuthenticationFailed(NetworkMessage netMsg)
-    {
-        Debug.Log("Authenticating: FAILED");
     }
 
     public string BuildAuthenticationPacket(String username, String password)
@@ -79,7 +73,7 @@ public class EverClient : MonoBehaviour {
     {
         Debug.Log("Authenticating: " + user + "&" + pass);
         _username = user;
-        _client.Send(EverMsgType.AuthenticationRequest, new StringMessage(BuildAuthenticationPacket(user,pass)));
+        _client.Send(EverMsgType.ClientLoginAuthenticationRequest, new StringMessage(BuildAuthenticationPacket(user,pass)));
     }
 
     private void OnError(NetworkMessage netMsg)
@@ -93,7 +87,7 @@ public class EverClient : MonoBehaviour {
     {
         string data = netMsg.reader.ReadString();
         Debug.Log("Received ServerList Data: " + data);
-        List<WorldServer> serverlist = new List<WorldServer>();
+        List<ActiveWorldServer> serverlist = new List<ActiveWorldServer>();
 
         if (!String.IsNullOrEmpty(data))
         {
@@ -101,10 +95,10 @@ public class EverClient : MonoBehaviour {
             foreach (string serverdata in serversdata)
             {
                 string[] servercolumns = serverdata.Split('|');
-                WorldServer worldserver = new WorldServer();
-                worldserver.serverip = servercolumns[0];
-                worldserver.serverport = Convert.ToDecimal(servercolumns[1]);
-                worldserver.servername = servercolumns[2];
+                ActiveWorldServer worldserver = new ActiveWorldServer();
+                worldserver.hostname = servercolumns[0];
+                worldserver.port = Convert.ToInt32(servercolumns[1]);
+                worldserver.name = servercolumns[2];
                 serverlist.Add(worldserver);
             }
         }

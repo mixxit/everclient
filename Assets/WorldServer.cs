@@ -1,8 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class WorldServer {
-    public string serverip;
-    public decimal serverport;
-    public string servername;
+public class WorldServer
+{
+    public string username;
+    public string password;
 }

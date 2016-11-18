@@ -25,7 +25,7 @@ public class ServerSelectController : MonoBehaviour {
         }
     }
 
-    public void BuildServerSelectPanel(List<WorldServer> worldservers)
+    public void BuildServerSelectPanel(List<ActiveWorldServer> worldservers)
     {
         ClearServerEntries();
 
@@ -33,16 +33,16 @@ public class ServerSelectController : MonoBehaviour {
         abutton.transform.SetParent(contentarea.transform, false);
         abutton.GetComponentInChildren<UnityEngine.UI.Text>().text = "Admin Panel";
 
-        foreach (WorldServer worldserver in worldservers)
+        foreach (ActiveWorldServer worldserver in worldservers)
         {
             GameObject button = Instantiate(serverlistbutton);
             button.transform.SetParent(contentarea.transform, false);
-            button.GetComponentInChildren<UnityEngine.UI.Text>().text = worldserver.servername;
+            button.GetComponentInChildren<UnityEngine.UI.Text>().text = worldserver.name;
         }
     }
 
     public void RequestServerListRefresh()
     {
-        GameObject.Find("EverClient").GetComponent<EverClient>().RequestServerListRefresh();
+        GameObject.Find("EverClient").GetComponent<ClientController>().RequestServerListRefresh();
     }
 }

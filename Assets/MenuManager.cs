@@ -43,7 +43,7 @@ public class MenuManager : MonoBehaviour {
         InitialisePanel.SetActive(true);
     }
 
-    public void ShowServerSelect(List<WorldServer> worldservers)
+    public void ShowServerSelect(List<ActiveWorldServer> worldservers)
     {
         HideAllScreens();
         ServerSelectPanel.GetComponent<ServerSelectController>().BuildServerSelectPanel(worldservers);
