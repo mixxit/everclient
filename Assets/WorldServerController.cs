@@ -5,6 +5,8 @@ using System;
 using UnityEngine.Networking.NetworkSystem;
 using System.Collections.Generic;
 using System.Linq;
+using System.IO;
+using System.IO.IsolatedStorage;
 
 public class WorldServerController : MonoBehaviour
 {
@@ -23,16 +25,22 @@ public class WorldServerController : MonoBehaviour
     private Dictionary<int, string> _pendingconnectiontokens = new Dictionary<int, string>();
     private Dictionary<int, string> _connectiontokens = new Dictionary<int, string>();
 
+    private List<ZoneServer> _zoneaccounts = new List<ZoneServer>();
+
+    private Dictionary<string, ActiveZoneServer> _activezoneservers = new Dictionary<string, ActiveZoneServer>();
+
     // Use this for initialization
     void Start()
     {
         Application.runInBackground = true;
+        LoadWorldServers();
 
         NetworkServer.Listen(listenport);
         NetworkServer.RegisterHandler(MsgType.Connect, OnConnect);
         NetworkServer.RegisterHandler(MsgType.Disconnect, OnDisconnect);
         NetworkServer.RegisterHandler(MsgType.Error, OnError);
         NetworkServer.RegisterHandler(EverMsgType.WorldServerUserConnectionRequest, OnWorldServerUserConnectionRequest);
+        NetworkServer.RegisterHandler(EverMsgType.ZoneServerWorldAuthenticationRequest, OnZoneServerWorldAuthenticationRequest);
 
         // Login Server Client
         _loginclient = new NetworkClient();
@@ -42,6 +50,82 @@ public class WorldServerController : MonoBehaviour
         _loginclient.RegisterHandler(MsgType.Error, OnError);
         _loginclient.RegisterHandler(EverMsgType.WorldServerLoginAuthenticationResponse, OnWorldServerLoginAuthenticationResponse);
         _loginclient.RegisterHandler(EverMsgType.WorldServerUserValidationResponse, OnWorldServerUserValidationResponse);
+    }
+
+    private void OnZoneServerWorldAuthenticationRequest(NetworkMessage netMsg)
+    {
+        string[] requestdata = netMsg.reader.ReadString().Split('|');
+
+        if (IsZoneAccountValid(requestdata[0], requestdata[1]))
+        {
+            ActiveZoneServer zoneserver = new ActiveZoneServer();
+            zoneserver.username = requestdata[0];
+            zoneserver.hostname = requestdata[2];
+            zoneserver.port = Convert.ToDecimal(requestdata[3]);
+            zoneserver.zonename = requestdata[4];
+
+            Guid token = AssignNewZoneServerToken(zoneserver);
+            NetworkServer.SendToClient(netMsg.conn.connectionId, EverMsgType.ZoneServerWorldAuthenticationResponse, new StringMessage("1|" + token.ToString()));
+        }
+        else
+        {
+            NetworkServer.SendToClient(netMsg.conn.connectionId, EverMsgType.ZoneServerWorldAuthenticationResponse, new StringMessage("0|0"));
+        }
+    }
+
+    private Guid AssignNewZoneServerToken(ActiveZoneServer zoneserver)
+    {
+        Guid newguid = Guid.NewGuid();
+        zoneserver.token = newguid.ToString();
+        _activezoneservers[zoneserver.username] = zoneserver;
+        return newguid;
+    }
+
+    public bool IsZoneAccountValid(string username, string password)
+    {
+        if (_zoneaccounts.Where(a => a.username.Equals(username) && a.password.Equals(password)).ToList<ZoneServer>().Count > 0)
+            return true;
+
+        return false;
+    }
+
+    private void LoadWorldServers()
+    {
+        _zoneaccounts.Clear();
+
+        try
+        {
+            String accounts = File.ReadAllText("zoneservers.txt");
+            string[] accountlines = accounts.Split(new string[] { Environment.NewLine }, StringSplitOptions.None);
+            foreach (string accountline in accountlines)
+            {
+                if (String.IsNullOrEmpty(accountline))
+                    continue;
+
+                Debug.Log("Parsing: " + accountline);
+                string[] accountdetails = accountline.Split('|');
+                ZoneServer zoneserver = new ZoneServer();
+                zoneserver.username = accountdetails[0];
+                zoneserver.password = accountdetails[1];
+                _zoneaccounts.Add(zoneserver);
+            }
+        }
+        catch (FileNotFoundException filenotfoundexception)
+        {
+            File.WriteAllText("zoneservers.txt", "zonetest|password" + Environment.NewLine);
+            ZoneServer zoneserver = new ZoneServer();
+            zoneserver.username = "zonetest";
+            zoneserver.password = "password";
+            _zoneaccounts.Add(zoneserver);
+        }
+        catch (IsolatedStorageException isolatedstoragexception)
+        {
+            File.WriteAllText("zoneservers.txt", "zonetest|password" + Environment.NewLine);
+            ZoneServer zoneserver = new ZoneServer();
+            zoneserver.username = "zonetest";
+            zoneserver.password = "password";
+            _zoneaccounts.Add(zoneserver);
+        }
     }
 
     private void OnWorldServerUserConnectionRequest(NetworkMessage netMsg)

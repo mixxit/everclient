@@ -1,4 +1,4 @@
 sceneSetups:
-- path: Assets/mainentrypoint.unity
+- path: Assets/inactivezoneserver.unity
   isLoaded: 1
   isActive: 1

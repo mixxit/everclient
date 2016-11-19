@@ -231,9 +231,9 @@ public class LoginServerController : MonoBehaviour
         }
     }
 
-    public bool IsWorldAccountValid(string ipaddress, string password)
+    public bool IsWorldAccountValid(string username, string password)
     {
-        if (_worldaccounts.Where(a => a.username.Equals(ipaddress) && a.password.Equals(password)).ToList<WorldServer>().Count > 0)
+        if (_worldaccounts.Where(a => a.username.Equals(username) && a.password.Equals(password)).ToList<WorldServer>().Count > 0)
             return true;
 
         return false;
