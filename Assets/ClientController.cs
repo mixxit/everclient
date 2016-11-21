@@ -31,7 +31,16 @@ public class ClientController : MonoBehaviour {
         _client.RegisterHandler(MsgType.Error, OnError);
         _client.RegisterHandler(EverMsgType.ClientLoginAuthenticationResponse, OnClientLoginAuthenticationResponse);
         _client.RegisterHandler(EverMsgType.ServerSelectionListResponse, OnServerSelectionListResponse);
+        _client.RegisterHandler(EverMsgType.WorldServerUserConnectToZoneRequest, OnWorldServerUserConnectToZoneRequest);
         Initialised = true;
+    }
+
+    private void OnWorldServerUserConnectToZoneRequest(NetworkMessage netMsg)
+    {
+        string rawdata = netMsg.reader.ReadString();
+        string[] sceneloaddata = rawdata.Split('|');
+        Debug.Log("Changing Client Scene and connecting to Zone Server");
+        Scenes.Load(sceneloaddata[2], "onClientLoad", _token + "|" + rawdata);
     }
 
     private void OnClientLoginAuthenticationResponse(NetworkMessage netMsg)

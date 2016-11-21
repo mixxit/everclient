@@ -73,6 +73,7 @@
     <Compile Include="Assets\LLoginButtonController.cs" />
     <Compile Include="Assets\LoginServerController.cs" />
     <Compile Include="Assets\MenuManager.cs" />
+    <Compile Include="Assets\Scenes.cs" />
     <Compile Include="Assets\ServerListRefreshButtonController.cs" />
     <Compile Include="Assets\ServerSelectController.cs" />
     <Compile Include="Assets\WorldServer.cs" />

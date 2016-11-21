@@ -56,7 +56,6 @@ public class ZoneServerController : MonoBehaviour {
             Debug.Log("Client attempt to connect when in sleep mode, disconnected client");
             netMsg.conn.Disconnect();
         }
-
     }
 
     private void OnZoneServerWorldChangeSceneRequest(NetworkMessage netMsg)
@@ -66,6 +65,7 @@ public class ZoneServerController : MonoBehaviour {
 
         if (doessceneexist)
         {
+            Debug.Log("Starting switch to zone");
             _worldclient.Send(EverMsgType.ZoneServerWorldChangeSceneResponse, new StringMessage("1"));
             LoadZone(targetscene);
         } else

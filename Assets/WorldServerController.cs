@@ -28,6 +28,7 @@ public class WorldServerController : MonoBehaviour
     private List<ZoneServer> _zoneaccounts = new List<ZoneServer>();
 
     private Dictionary<string, ActiveZoneServer> _activezoneservers = new Dictionary<string, ActiveZoneServer>();
+    private Dictionary<int, ActiveZoneServer> _pendinguserzonebootup = new Dictionary<int, ActiveZoneServer>();
 
     // Use this for initialization
     void Start()
@@ -41,6 +42,7 @@ public class WorldServerController : MonoBehaviour
         NetworkServer.RegisterHandler(MsgType.Error, OnError);
         NetworkServer.RegisterHandler(EverMsgType.WorldServerUserConnectionRequest, OnWorldServerUserConnectionRequest);
         NetworkServer.RegisterHandler(EverMsgType.ZoneServerWorldAuthenticationRequest, OnZoneServerWorldAuthenticationRequest);
+        NetworkServer.RegisterHandler(EverMsgType.ZoneServerWorldChangeSceneResponse, OnZoneServerWorldChangeSceneResponse);
 
         // Login Server Client
         _loginclient = new NetworkClient();
@@ -50,6 +52,11 @@ public class WorldServerController : MonoBehaviour
         _loginclient.RegisterHandler(MsgType.Error, OnError);
         _loginclient.RegisterHandler(EverMsgType.WorldServerLoginAuthenticationResponse, OnWorldServerLoginAuthenticationResponse);
         _loginclient.RegisterHandler(EverMsgType.WorldServerUserValidationResponse, OnWorldServerUserValidationResponse);
+    }
+
+    private void OnZoneServerWorldChangeSceneResponse(NetworkMessage netMsg)
+    {
+        Debug.Log("Zone Server is changing scene");
     }
 
     private void OnZoneServerWorldAuthenticationRequest(NetworkMessage netMsg)
@@ -63,9 +70,27 @@ public class WorldServerController : MonoBehaviour
             zoneserver.hostname = requestdata[2];
             zoneserver.port = Convert.ToDecimal(requestdata[3]);
             zoneserver.zonename = requestdata[4];
+            zoneserver.connid = netMsg.conn.connectionId;
 
             Guid token = AssignNewZoneServerToken(zoneserver);
             NetworkServer.SendToClient(netMsg.conn.connectionId, EverMsgType.ZoneServerWorldAuthenticationResponse, new StringMessage("1|" + token.ToString()));
+
+            // Locate any users pending this zone bootup and send them to it
+
+            List<int> connidstoremove = new List<int>();
+            foreach (KeyValuePair<int, ActiveZoneServer> pendinguser in _pendinguserzonebootup)
+            {
+                if (!pendinguser.Value.username.Equals(zoneserver.username))
+                    continue;
+
+                NetworkServer.SendToClient(pendinguser.Key, EverMsgType.WorldServerUserConnectToZoneRequest, new StringMessage(zoneserver.hostname + "|" + zoneserver.port));
+                connidstoremove.Add(pendinguser.Key);
+            }
+
+            foreach (int connid in connidstoremove)
+            {
+                _pendinguserzonebootup.Remove(connid);
+            }
         }
         else
         {
@@ -157,29 +182,15 @@ public class WorldServerController : MonoBehaviour
         InvalidatePendingConnectionToken(connectionId);
     }
 
-    public string BuildConnectionRequestResponse(bool validated)
+    public string BuildConnectionRequestResponse(bool validated, string zonehostname, decimal zoneport)
     {
         string suceeded = "0";
-        string charselectzoneip = "";
-        string charselectzoneport = "";
         if (validated == true)
         {
             suceeded = "1";
-            charselectzoneip = GetCharSelectZoneIP();
-            charselectzoneport = GetCharSelectZonePort();
         }
 
-        return suceeded + "|" + charselectzoneip + "|" + charselectzoneport;
-    }
-
-    public string GetCharSelectZoneIP()
-    {
-        return "";
-    }
-
-    public string GetCharSelectZonePort()
-    {
-        return "";
+        return suceeded + "|" + zonehostname + "|" + zoneport;
     }
 
     private void OnWorldServerUserValidationResponse(NetworkMessage netMsg)
@@ -191,11 +202,53 @@ public class WorldServerController : MonoBehaviour
         if (responseData[0].Equals("1"))
         {
             MarkConnectionAsValidated(int.Parse(responseData[1]), tokenBundle);
+
+            // Send to char select
+            MovePlayerToZoneServer(netMsg.conn.connectionId, "charselect");
         }
         else
         {
             InvalidatePendingConnectionToken(int.Parse(responseData[1]));
-            NetworkServer.SendToClient(int.Parse(responseData[1]), EverMsgType.WorldServerUserConnectionResponse, new StringMessage(BuildConnectionRequestResponse(true)));
+            NetworkServer.SendToClient(int.Parse(responseData[1]), EverMsgType.WorldServerUserConnectionResponse, new StringMessage(BuildConnectionRequestResponse(false, "", 0)));
+        }
+    }
+
+    public void MovePlayerToZoneServer(int connectionid, string zonename)
+    {
+        ActiveZoneServer targetzoneserver = new ActiveZoneServer();
+
+        bool locatedzone = false;
+
+        foreach(KeyValuePair<string, ActiveZoneServer> keypair in _activezoneservers)
+        {
+            if (keypair.Value.zonename.Equals(zonename))
+            {
+                targetzoneserver = keypair.Value;
+                locatedzone = true;
+                break;
+            }
+        }
+
+        if (!locatedzone)
+        {
+            // Boot up a zone
+            foreach (KeyValuePair<string, ActiveZoneServer> keypair in _activezoneservers)
+            {
+                if (keypair.Value.zonename.Equals("inactivezoneserver"))
+                {
+                    NetworkServer.SendToClient(keypair.Value.connid, EverMsgType.ZoneServerWorldChangeSceneRequest, new StringMessage());
+
+                    ActiveZoneServer activezoneserver = new ActiveZoneServer();
+                    activezoneserver = keypair.Value;
+                    activezoneserver.zonename = zonename;
+
+                    _pendinguserzonebootup[connectionid] = activezoneserver;
+                    break;
+                }
+            }
+        } else
+        {
+            NetworkServer.SendToClient(connectionid, EverMsgType.WorldServerUserConnectionResponse, new StringMessage(BuildConnectionRequestResponse(false, targetzoneserver.hostname, targetzoneserver.port)));
         }
     }
 

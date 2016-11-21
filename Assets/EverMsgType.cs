@@ -14,6 +14,9 @@ public class EverMsgType
     public const int WorldServerUserConnectionRequest = 1107;
     public const int WorldServerUserConnectionResponse = 1108;
 
+    public const int WorldServerUserConnectToZoneRequest = 1109;
+    public const int WorldServerUserConnectToZoneResponse = 1110;
+
     public const int ZoneServerClientAuthenticationRequest = 2001;
     public const int ZoneServerClientAuthenticationResponse = 2002;
     public const int ZoneServerWorldAuthenticationRequest = 2003;

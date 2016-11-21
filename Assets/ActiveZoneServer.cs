@@ -7,4 +7,5 @@ public class ActiveZoneServer {
     public string hostname;
     public decimal port;
     public string token;
+    public int connid;
 }
